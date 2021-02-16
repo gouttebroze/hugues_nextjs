@@ -1,157 +1,106 @@
-import { SoftPageProps } from '@/layouts/core/types/SoftPageProps';
-import { GenericObject } from '@/modules/core/data/types/GenericObject';
-import DefaultErrorLayout from '@/modules/core/errorHandling/DefaultErrorLayout';
-import PreviewModeBanner from '@/modules/core/previewMode/components/PreviewModeBanner';
-import Sentry from '@/modules/core/sentry/sentry';
-import ErrorPage from '@/pages/_error';
-import {
-  Amplitude,
-  LogOnMount,
-} from '@amplitude/react-amplitude';
-import { createLogger } from '@unly/utils-simple-logger';
-import classnames from 'classnames';
-import {
-  NextRouter,
-  useRouter,
-} from 'next/router';
-import React from 'react';
-import BaseFooter from './DefaultFooter';
-import Head, { HeadProps } from './DefaultHead';
-import Nav from './DefaultNav';
-import DefaultPageContainer from './DefaultPageContainer';
-
-const fileLabel = 'layouts/core/components/Layout';
-const logger = createLogger({
-  label: fileLabel,
-});
+import * as React from 'react';
+import Link from 'next/link';
+import Head from 'next/head';
 
 type Props = {
-  /**
-   * Content to display within the layout.
-   *
-   * Essentially, the page's content.
-   */
-  children: React.ReactNode;
+  title?: string,
+}
 
-  /**
-   * Props forwarded to the Head component.
-   *
-   * Essentially, SEO metadata, etc.
-   * Will use sane defaults if not specified.
-   */
-  headProps?: HeadProps;
+// const {
+//   color,
+//   backgroundColor,
+//   borderColor,
+//   hoverColor,
+//   hoverBackgroundColor,
+//   hoverBorderColor,
+//   hoverBoxShadowColor,
+// } = resolveThemedComponentColors(customerTheme, mode, isTransparent);
 
-  /**
-   * Internal name of the page.
-   *
-   * Used by Amplitude, for analytics.
-   * All events happening on the page will be linked to that page name.
-   */
-  pageName: string;
+const DefaultLayout: React.FunctionComponent<Props> = ({ children, title }) => (
+  <div className='root'>
 
-  /**
-   * Wrapper container for the page.
-   *
-   * By default, uses DefaultPageContainer component.
-   */
-  PageContainer?: React.FunctionComponent;
-} & SoftPageProps;
+    <Head>
+      <title>{title}</title>
+      <meta charSet='utf-8' />
+      <meta name='viewport' content='initial-scale=1.0, width=device-width' />
+    </Head>
 
-/**
- * Handles the positioning of top-level elements within the page.
- *
- * It does the following:
- *  - Adds a Nav/Footer component, and the dynamic Next.js "Page" component in between.
- *  - Automatically track page views (Amplitude).
- *  - Handles errors by displaying the Error page, with the ability to contact technical support (which will send a Sentry User Feedback).
- *
- * XXX Core component, meant to be used by other layouts, shouldn't be used by other components directly.
- */
-const DefaultLayout: React.FunctionComponent<Props> = (props): JSX.Element => {
-  const {
-    children,
-    error,
-    isInIframe = false, // Won't be defined server-side
-    headProps = {},
-    pageName,
-    PageContainer = DefaultPageContainer,
-  } = props;
-  const router: NextRouter = useRouter();
-  const isIframeWithFullPagePreview = router?.query?.fullPagePreview === '1';
+    <header>
+      <h1>Simulacre</h1>
+      <Link href='/'>
+        <a href="/accueil">Accueil</a>
+      </Link> | {' '}
+      <Link href='/fr/register'>
+        <a href="/fr/register">Contact</a>
+      </Link> | {' '}
+      <Link href='/chatbot'>
+        <a href="/chatbot">Chatbot</a>
+      </Link> | {' '}
+      <Link href='/fr/about'>
+        <a href="/fr/about">Mes Repos</a>
+      </Link> 
+      
+      <a href="/fr/contact">Me Contacter</a>
+      
+         
+    </header> 
 
-  Sentry.addBreadcrumb({ // See https://docs.sentry.io/enriching-error-data/breadcrumbs
-    category: fileLabel,
-    message: `Rendering ${fileLabel} for page ${pageName}`,
-    level: Sentry.Severity.Debug,
-  });
+    <h1>{title}</h1>
+    {children}
 
-  Sentry.configureScope((scope): void => {
-    scope.setTag('fileLabel', fileLabel);
-  });
+    {/* add this content footer into footer component */}
+    <footer>
+      <hr />
+      <span>Developement and Creation by Hugues Simulacre Gouttebroze & copy: {new Date().getFullYear()}
+        <br/>
+      Special thanks to 
+        {/* to do: !!! ADD LINKS !!! */}
+        <ul>
+          <li>Unly & Next Right Now</li>
+          <li>Lydra & "Les Compagnons du DevOps"</li>
+          <li>Human Booster</li>
+          <li>Design Tech Académie & Télécom Saint-Etienne</li>
+        </ul>
+      
+      </span>
+    </footer>
+    <style jsx>{`
+    .root {
+      display: flex;
+      jusify-content:center;
+      align-items: center;
+      flex-direction: column;
+    }
+    header {
+      width:100%;
+      display: flex;
+      justify-content: space-around;
+      padding: 1em;
+      font-size: 1.2rem;
+      background: indigo;
+    }
+    header a {
+      color: darkgrey;
+      text-decoration: none;
+    }
+    header a:hover {
+      font-weight: bold;
+      color: lightgrey;
+    }
+    footer {
+      padding: 1em;
+    }
+    `}</style>
 
-  return (
-    <Amplitude
-      eventProperties={(inheritedProps): GenericObject => ({
-        ...inheritedProps,
-        page: {
-          ...inheritedProps.page,
-          name: pageName,
-        },
-      })}
-    >
-      <Head {...headProps} />
-      <LogOnMount eventType="page-displayed" />
-
-      {/* Loaded from components/Head - See https://github.com/mikemaccana/outdated-browser-rework */}
-      {/*<div*/}
-      {/*  id="outdated"*/}
-      {/*  style={{ display: 'none' }}*/}
-      {/*></div>*/}
-
-      {
-        // XXX You may want to enable preview mode during non-production stages only
-        process.env.NEXT_PUBLIC_APP_STAGE !== 'production' && (
-          <PreviewModeBanner />
-        )
+    <style global jsx>{`
+      body {
+        margin: 0;
+        font-size: 110%;
+        background: #f0f0f0;
       }
+  `}</style>
 
-      {
-        (!isInIframe || isIframeWithFullPagePreview) && (
-          <Nav />
-        )
-      }
-
-      <div
-        className={classnames('page-wrapper', isInIframe ? 'is-in-iframe' : 'not-in-iframe')}
-      >
-        {
-          // If an error happened, we display it instead of displaying the page
-          // We display a custom error instead of the native Next.js error by providing children (removing children will display the native Next.js error)
-          error ? (
-            <ErrorPage
-              statusCode={500}
-              isReadyToRender={true}
-              err={error}
-            >
-              <DefaultErrorLayout
-                error={error}
-              />
-            </ErrorPage>
-          ) : (
-            <PageContainer>
-              {children}
-            </PageContainer>
-          )
-        }
-      </div>
-
-      {
-        (!isInIframe || isIframeWithFullPagePreview) && (
-          <BaseFooter />
-        )
-      }
-    </Amplitude>
-  );
-};
+  </div>
+);
 
 export default DefaultLayout;
